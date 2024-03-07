@@ -14,6 +14,7 @@
     <script src="plugins/jspsych-instructions.js" type="text/javascript"></script>
     <script src="plugins/jspsych-inattentional-blindness.js" type="text/javascript"></script>
     <script src="plugins/jspsych-attentional_capture.js" type="text/javascript"></script>
+    <script src="plugins/jspsych-html-keyboard-response.js" type="text/javascript"></script>
     <link rel="stylesheet" href="css/jspsych.css" type="text/css">
 
     <script id="functions">
@@ -75,7 +76,19 @@
             }
             return survey_trials;
         }
-    </script>
+   
+        function getChangeBackgroundColorTrial(color) {
+            return {
+                type: "html-keyboard-response",
+                stimulus: "",
+                choices: "NO_KEYS",
+                trial_duration: 10,
+                on_start: function () {
+                    document.getElementsByTagName('body')[0].style.backgroundColor = color;
+                }
+            };
+        }
+   </script>
 
     <!-- TODO: Validate instructions -->
     <script id="rms">
@@ -209,7 +222,7 @@
             show_clickable_nav: true,
             type: "instructions",
             direction: "ltr",
-            name: "rms_where_instructions",
+            name: "attentional_capture_training_instructions",
             on_finish: function () {
                 document.getElementsByTagName('body')[0].style.backgroundColor = 'black';
             }
@@ -222,8 +235,23 @@
             show_clickable_nav: true,
             type: "instructions",
             direction: "ltr",
-            name: "rms_where_instructions"
+            name: "attentional_capture_instructions",
+            on_finish: function () {
+                document.getElementsByTagName('body')[0].style.backgroundColor = 'black';
+            }
         };
+
+        function getSingleAttentionalCaptureTrial(singelton_exist, color, distractor_color, distractors_shapes) {
+            return {
+                type: 'attentional-capture',
+                target_shape: "circle",
+                color: color,
+                distractor_exist: singelton_exist,
+                distractor_shapes: distractors_shapes,
+                distractor_color: distractor_color,
+                set_size: 8
+            };
+        }
 
         function getDistractorColor(color) {
             if (color == "red") {
@@ -238,6 +266,7 @@
             let main_with_distractor_count;
             let main_without_distractor_count;
             let colors;
+            const distractors_shapes_list = ["diamond", "square", "triangle"];
 
             if (test) {
                 training_count = 2;
@@ -265,60 +294,36 @@
             let training_trials = [];
 
             for (let i = 0; i < training_count; i++) {
-                training_trials.push({
-                    type: 'attentional-capture',
-                    target_shape: "circle",
-                    distractor_shape: "diamond",
-                    color: colors[i],
-                    distractor_exist: false,
-                    set_size: 5
-                });
+                training_trials.push(getSingleAttentionalCaptureTrial(false, colors[i], getDistractorColor(colors[i]), ["circle", "square", "triangle"]));
             }
 
             let main_trials = [];
 
             for (let i = training_count; i < main_with_distractor_count + training_count; i++) {
-                main_trials.push({
-                    type: 'attentional-capture',
-                    target_shape: "circle",
-                    color: colors[i],
-                    distractor_exist: true,
-                    distractor_shape: "diamond",
-                    distractor_color: getDistractorColor(colors[i]),
-                    set_size: 5
-                });
+                if (i % 2 == 0) {
+                    main_trials.push(getSingleAttentionalCaptureTrial(true, colors[i], getDistractorColor(colors[i]), distractors_shapes_list));
+                } else {
+                    main_trials.push(getSingleAttentionalCaptureTrial(true, colors[i], getDistractorColor(colors[i]), [shuffle(distractors_shapes_list)[0]]));
+                }
             }
 
             for (let i = main_with_distractor_count + training_count; i < training_count + main_count; i++) {
-                if (i == training_count + main_count - 1) {
-                    main_trials.push({
-                        type: 'attentional-capture',
-                        target_shape: "circle",
-                        color: colors[i],
-                        distractor_exist: false,
-                        set_size: 5,
-                        on_finish: function () {
-                            document.getElementsByTagName('body')[0].style.backgroundColor = '#808080';
-                        }
-                    });
+                if (i % 2 == 0) {
+                    main_trials.push(getSingleAttentionalCaptureTrial(false, colors[i], getDistractorColor(colors[i]), distractors_shapes_list));
                 } else {
-                    main_trials.push({
-                        type: 'attentional-capture',
-                        target_shape: "circle",
-                        distractor_shape: "diamond",
-                        color: colors[i],
-                        distractor_exist: false,
-                        set_size: 5
-                    });
+                    main_trials.push(getSingleAttentionalCaptureTrial(false, colors[i], getDistractorColor(colors[i]), [shuffle(distractors_shapes_list)[0]]));
                 }
-
             }
 
             return [
                 attentional_capture_training_instructions,
-                ...training_trials,
+                getChangeBackgroundColorTrial("black"),
+                ...shuffle(training_trials),
+                getChangeBackgroundColorTrial("#808080"),
                 attentional_capture_instructions,
-                ...main_trials
+                getChangeBackgroundColorTrial("black"),
+                ...shuffle(main_trials),
+                getChangeBackgroundColorTrial("#808080"),
             ]
         }
     </script>
@@ -618,7 +623,11 @@
 
         }
 
-        shuffle([rms_trials, ac_trials]).forEach(trials => {
+        shuffle([ac_trials]).forEach(trials => {
+            experiment_timeline.push(...trials);
+        });
+
+        shuffle([rms_trials]).forEach(trials => {
             experiment_timeline.push(...trials);
         });
 

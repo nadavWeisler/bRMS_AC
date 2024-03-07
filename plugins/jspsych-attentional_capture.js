@@ -36,6 +36,15 @@ class VisualSearchShape {
   draw(ctx) {
     // Abstract method for drawing a generic shape
   }
+
+  drawLineSegment(ctx, startX, startY, endX, endY) {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(endX, endY);
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
 }
 
 class VisualSearchCircle extends VisualSearchShape {
@@ -44,21 +53,9 @@ class VisualSearchCircle extends VisualSearchShape {
     this.type = "circle";
   }
 
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
   set_size(width, height) {
     super.set_size(width, height);
     this.radius = this.width / 2;
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
   }
 
   draw(ctx) {
@@ -82,13 +79,7 @@ class VisualSearchCircle extends VisualSearchShape {
     ctx.stroke();
     ctx.closePath();
 
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
 }
 
@@ -96,22 +87,6 @@ class VisualSearchDiamond extends VisualSearchShape {
   constructor() {
     super();
     this.type = "diamond";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
   }
 
   draw(ctx) {
@@ -138,70 +113,7 @@ class VisualSearchDiamond extends VisualSearchShape {
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
 
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-  }
-}
-
-class VisualSearchStar extends VisualSearchShape {
-  constructor() {
-    super();
-    this.type = "star";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
-  }
-
-  draw(ctx) {
-    let lineStartX, lineStartY, lineEndX, lineEndY;
-    if (this.angle === 90) {
-      lineStartX = this.x;
-      lineStartY = this.y - (this.height / 4);
-      lineEndX = this.x;
-      lineEndY = this.y + (this.height / 4);
-    } else {
-      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
-      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
-    }
-
-    // Draw the star border
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.width / 2, this.y);
-    ctx.lineTo(this.x, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 2, this.y);
-    ctx.lineTo(this.x, this.y + this.height / 2);
-    ctx.closePath();
-    ctx.strokeStyle = this.border_color;
-    ctx.stroke();
-
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
 }
 
@@ -209,22 +121,6 @@ class VisualSeachTriangle extends VisualSearchShape {
   constructor() {
     super();
     this.type = "triangle";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
   }
 
   draw(ctx) {
@@ -250,13 +146,7 @@ class VisualSeachTriangle extends VisualSearchShape {
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
 
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
 }
 
@@ -264,22 +154,6 @@ class VisualSearchSquare extends VisualSearchShape {
   constructor() {
     super();
     this.type = "square";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
   }
 
   draw(ctx) {
@@ -306,267 +180,19 @@ class VisualSearchSquare extends VisualSearchShape {
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
 
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
 }
-
-class VisualSearchHexagon extends VisualSearchShape {
-  constructor() {
-    super();
-    this.type = "hexagon";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
-  }
-
-  draw(ctx) {
-    let lineStartX, lineStartY, lineEndX, lineEndY;
-    if (this.angle === 90) {
-      lineStartX = this.x;
-      lineStartY = this.y - (this.height / 4);
-      lineEndX = this.x;
-      lineEndY = this.y + (this.height / 4);
-    } else {
-      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
-      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
-    }
-
-    // Draw the hexagon border
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.width / 2, this.y);
-    ctx.lineTo(this.x - this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 2, this.y);
-    ctx.lineTo(this.x + this.width / 4, this.y + this.height / 2);
-    ctx.lineTo(this.x - this.width / 4, this.y + this.height / 2);
-    ctx.closePath();
-    ctx.strokeStyle = this.border_color;
-    ctx.stroke();
-
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-}
-
-class VisualSearchPentagon extends VisualSearchShape {
-  constructor() {
-    super();
-    this.type = "pentagon";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
-  }
-
-  draw(ctx) {
-    let lineStartX, lineStartY, lineEndX, lineEndY;
-    if (this.angle === 90) {
-      lineStartX = this.x;
-      lineStartY = this.y - (this.height / 4);
-      lineEndX = this.x;
-      lineEndY = this.y + (this.height / 4);
-    } else {
-      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
-      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
-    }
-
-    // Draw the pentagon border
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.width / 2, this.y);
-    ctx.lineTo(this.x - this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 2, this.y);
-    ctx.lineTo(this.x, this.y + this.height / 2);
-    ctx.closePath();
-    ctx.strokeStyle = this.border_color;
-    ctx.stroke();
-
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-}
-
-class VisualSearchOctagon extends VisualSearchShape {
-  constructor() {
-    super();
-    this.type = "octagon";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
-  }
-
-  draw(ctx) {
-    let lineStartX, lineStartY, lineEndX, lineEndY;
-    if (this.angle === 90) {
-      lineStartX = this.x;
-      lineStartY = this.y - (this.height / 4);
-      lineEndX = this.x;
-      lineEndY = this.y + (this.height / 4);
-    } else {
-      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
-      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
-    }
-
-    // Draw the octagon border
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.width / 2, this.y - this.height / 4);
-    ctx.lineTo(this.x - this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 4, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 2, this.y - this.height / 4);
-    ctx.lineTo(this.x + this.width / 2, this.y + this.height / 4);
-    ctx.lineTo(this.x + this.width / 4, this.y + this.height / 2);
-    ctx.lineTo(this.x - this.width / 4, this.y + this.height / 2);
-    ctx.lineTo(this.x - this.width / 2, this.y + this.height / 4);
-    ctx.closePath();
-    ctx.strokeStyle = this.border_color;
-    ctx.stroke();
-
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-}
-
-class VisualSearchTrapezoid extends VisualSearchShape {
-  constructor() {
-    super();
-    this.type = "trapezoid";
-  }
-
-  set_border_color(border_color) {
-    super.set_border_color(border_color);
-  }
-
-  set_location(x, y) {
-    super.set_location(x, y);
-  }
-
-  set_size(width, height) {
-    super.set_size(width, height);
-  }
-
-  set_line_angle(angle) {
-    super.set_line_angle(angle);
-  }
-
-  draw(ctx) {
-    let lineStartX, lineStartY, lineEndX, lineEndY;
-    if (this.angle === 90) {
-      lineStartX = this.x;
-      lineStartY = this.y - (this.height / 4);
-      lineEndX = this.x;
-      lineEndY = this.y + (this.height / 4);
-    } else {
-      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
-      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
-    }
-
-    // Draw the trapezoid border
-    ctx.beginPath();
-    ctx.moveTo(this.x - this.width / 2, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 2, this.y - this.height / 2);
-    ctx.lineTo(this.x + this.width / 4, this.y + this.height / 2);
-    ctx.lineTo(this.x - this.width / 4, this.y + this.height / 2);
-    ctx.closePath();
-    ctx.strokeStyle = this.border_color;
-    ctx.stroke();
-
-    // Draw the line segment
-    ctx.beginPath();
-    ctx.moveTo(lineStartX, lineStartY);
-    ctx.lineTo(lineEndX, lineEndY);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-}
-
 
 function getShapeFromName(name) {
   if (name === "circle") {
     return new VisualSearchCircle();
   } else if (name === "diamond") {
     return new VisualSearchDiamond();
-  } else if (name === "star") {
-    return new VisualSearchStar();
   } else if (name === "triangle") {
     return new VisualSeachTriangle();
   } else if (name === "square") {
     return new VisualSearchSquare();
-  } else if (name === "hexagon") {
-    return new VisualSearchHexagon();
-  } else if (name === "pentagon") {
-    return new VisualSearchPentagon();
-  } else if (name === "octagon") {
-    return new VisualSearchOctagon();
-  } else if (name === "trapezoid") {
-    return new VisualSearchTrapezoid();
   } else {
     throw new Error("Invalid shape name");
   }
@@ -667,6 +293,13 @@ jsPsych.plugins["attentional-capture"] = (function () {
         default: "circle",
         description: 'The shape of the distractors.'
       },
+      distractor_shapes: {
+        type: jsPsych.plugins.parameterType.COMPLEX,
+        pretty_name: 'Distractor shapes',
+        default: ["diamond", "triangle", "square", "octagon"],
+        array: true,
+        description: 'The shapes of the distractors.'
+      },
       set_size: {
         type: jsPsych.plugins.parameterType.INT,
         pretty_name: 'Set size',
@@ -765,9 +398,7 @@ jsPsych.plugins["attentional-capture"] = (function () {
         let randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
         // And swap it with the current element.
-        [array[currentIndex], array[randomIndex]] = [
-          array[randomIndex], array[currentIndex]
-        ];
+        [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
       }
 
       return array;
@@ -825,8 +456,10 @@ jsPsych.plugins["attentional-capture"] = (function () {
     target_shape.set_border_color(trial.color);
     shapes.push(target_shape);
 
+    const shuffled_distractor_shapes = shuffle(trial.distractor_shapes);
+
     for (let i = 0; i < trial.set_size - 1; i++) {
-      let current_distractor_shape = getShapeFromName(trial.distractor_shape);
+      let current_distractor_shape = getShapeFromName(shuffled_distractor_shapes[i % trial.distractor_shapes.length]);
       if (trial.distractor_exist && i === 0) {
         current_distractor_shape.set_border_color(trial.distractor_color);
         current_distractor_shape.set_line_angle(distractor_angle);
