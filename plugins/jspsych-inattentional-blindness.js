@@ -10,8 +10,8 @@ function CreateNewCanvas(_id, _className, _width, _height, _position, _visibilit
     return newCanvas;
 }
 
-class Shape {
-    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas) {
+class IB_Shape {
+    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, min_speed, max_speed, canvas) {
         this.posX = posX;
         this.posY = posY;
         this.color = color;
@@ -20,46 +20,26 @@ class Shape {
         this.boxRight = canvas.width;
         this.boxTop = canvas.height / 2 - vertical_limit;
         this.boxBottom = canvas.height / 2 + vertical_limit - this.width;
-        this.bounceCount = 0;
         this.vel = 0;
         this.cmVel = Math.floor((Math.random() * 5) + 3);
         this.dY = dY;
         this.dX = dX;
-        this.onTop = null;
-        this.onBottom = null;
-        this.speedSwitchTime = Math.floor(((Math.random() * 300) + 100) * 10);
+        this.speedSwitchTime = ((Math.random() * (4000 - 3000)) + 3000)
         this.newSpeedStartTime = new Date().getTime();
         this.thickness = thickness;
         this.height = canvas.height;
         this.canvas = canvas;
-        this.bounces = {
-            "Shape": 0
-        };
         this.shapeType = "Shape";
-        this.hit = false;
+        this.passedLineCount = 0;
+        this.min_speed = min_speed;
+        this.max_speed = max_speed;
     }
 
-    // Common methods for all shapes can go here
-    move(shapes) {
+    move() {
         let newX = this.posX;
         let newY = this.posY;
         let newDx = this.dX;
         let newDy = this.dY;
-
-        if (this.hit) {
-            this.hit = false;
-            if (newDx < 0) {
-                newDx = -1;
-            } else {
-                newDx = 1;
-            }
-
-            if (newDy < 0) {
-                newDy = -1;
-            } else {   
-                newDy = 1;
-            }
-        }
 
         // If the shape is outside the canvas, move it back in and reverse its direction
         if (this.posX > this.boxRight - this.width) {
@@ -84,43 +64,41 @@ class Shape {
         // Change speed
         if (this.newSpeedTime >= this.speedSwitchTime) {
             this.newSpeedStartTime = new Date().getTime();
-            this.cmVel = Math.floor((Math.random() * 5) + 3);
+            this.cmVel = ((Math.random() * (this.max_speed - this.min_speed)) + this.min_speed) / 60;
             if ((this.posY < this.boxBottom) && (this.posY > this.boxTop) &&
                 (this.posX > this.boxLeft) && (this.posX < this.boxRight)) {
-                if (Math.random() * 10 > 5) {
-                    this.dX *= -1;
-                }
-                if (Math.random() * 10 > 5) {
-                    this.dY *= -1;
-                }
+                newDx *= Math.random() < 0.5 ? -1 : 1; // Random direction for horizontal movement (-1 to 1)
+                newDy *= Math.random() < 0.5 ? -1 : 1;
             }
         }
 
-        shapes.forEach(function (shape) {
-            if (shape != this) {
-                if (
-                    newX < shape.posX + shape.width &&
-                    newX + this.width > shape.posX &&
-                    newY < shape.posY + shape.width &&
-                    newY + this.width > shape.posY
-                ) {
-                    // Reverse the direction immediately after the collision
-                    newDx *= -1;
-                    newDy *= -1;
-                    this.hit = true;
-                    if (!shape.hit) {
-                        this.bounces[shape.shapeType] = this.bounces[shape.shapeType] + 1 || 1;
-                        shape.bounces[this.shapeType] = shape.bounces[this.shapeType] + 1 || 1;
-                        console.log("Bounced off " + shape.shapeType + " and " + this.shapeType + " has bounced " + this.bounces[shape.shapeType] + " times off " + shape.shapeType);
-                    }
-
-                }
-            }
-        }.bind(this));
-
+        // Limit speed between min_speed and max_speed
         this.vel = this.cmVel;
+        if (this.vel < (this.min_speed / 60)) { // Convert min_speed from pixels per second to pixels per frame
+            this.vel = this.min_speed / 60;
+        } else if (this.vel > (this.max_speed / 60)) { // Convert max_speed from pixels per second to pixels per frame
+            this.vel = this.max_speed / 60;
+        }
+
         newX += this.vel * newDx;
         newY += this.vel * newDy;
+
+        if ((this.posY + this.width < this.canvas.height / 2) && (this.onTop != true)) {
+            if (this.onBottom == true) {
+                console.log("passed line", this.passedLineCount)
+                this.passedLineCount++;
+            }
+            this.onTop = true;
+            this.onBottom = false;
+        }
+        if ((this.posY > this.canvas.height / 2) && (this.onBottom != true)) {
+            if (this.onTop == true) {
+                console.log("passed line", this.passedLineCount)
+                this.passedLineCount++;
+            }
+            this.onTop = false;
+            this.onBottom = true;
+        }
 
         this.posX = newX;
         this.posY = newY;
@@ -128,21 +106,34 @@ class Shape {
         this.dY = newDy;
     }
 
-    draw(context) { }
-
-    handleCollision() {
-        this.bounceCount++;
-    }
+    draw() { }
 }
 
-class L extends Shape {
-    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas) {
-        super(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas)
+class L extends IB_Shape {
+    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, min_speed, max_speed, canvas) {
+        super(posX, posY, color, dX, dY, thickness, width, vertical_limit, min_speed, max_speed, canvas)
         this.shapeType = "L";
     }
 
-    move(shapes) {
-        super.move(shapes);
+    move(line) {
+        super.move();
+        // Check if the L object intersects the line and hasn't passed it in this cycle
+        // if (!this.hasPassedLine &&
+        //     this.posY < line.posY + line.height &&
+        //     this.posY + this.width > line.posY &&
+        //     this.posX < line.posX + line.width &&
+        //     this.posX + this.width > line.posX
+        // ) {
+        //     this.passedLineCount++; // Increment count
+        //     this.hasPassedLine = true; // Set flag
+        // } else if (this.hasPassedLine &&
+        //     (this.posY >= line.posY + line.height ||
+        //         this.posY + this.width <= line.posY ||
+        //         this.posX >= line.posX + line.width ||
+        //         this.posX + this.width <= line.posX)
+        // ) {
+        //     this.hasPassedLine = false; // Reset flag if no longer intersecting
+        // }
     }
 
     draw(context) {
@@ -160,14 +151,31 @@ class L extends Shape {
     }
 }
 
-class T extends Shape {
-    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas) {
-        super(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas);
+class T extends IB_Shape {
+    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, min_speed, max_speed, canvas) {
+        super(posX, posY, color, dX, dY, thickness, width, vertical_limit, min_speed, max_speed, canvas);
         this.shapeType = "T";
     }
 
-    move(shapes) {
-        super.move(shapes);
+    move(line) {
+        super.move();
+        // Check if the T object intersects the line and hasn't passed it in this cycle
+        // if (!this.hasPassedLine &&
+        //     this.posY < line.posY + line.height &&
+        //     this.posY + this.width > line.posY &&
+        //     this.posX < line.posX + line.width &&
+        //     this.posX + this.width > line.posX
+        // ) {
+        //     this.passedLineCount++; // Increment count
+        //     this.hasPassedLine = true; // Set flag
+        // } else if (this.hasPassedLine &&
+        //     (this.posY >= line.posY + line.height ||
+        //         this.posY + this.width <= line.posY ||
+        //         this.posX >= line.posX + line.width ||
+        //         this.posX + this.width <= line.posX)
+        // ) {
+        //     this.hasPassedLine = false; // Reset flag if no longer intersecting
+        // }
     }
 
     draw(context) {
@@ -183,7 +191,49 @@ class T extends Shape {
     }
 }
 
-class Target {
+class EnvShape {
+    constructor(posX, posY, height, color) {
+        this.posX = posX;
+        this.posY = posY;
+        this.height = height;
+        this.color = color;
+    }
+}
+
+class IB_Line extends EnvShape {
+    constructor(posX, posY, height, color, width) {
+        super(posX, posY, height, color);
+        this.width = width;
+    }
+
+    draw(context) {
+        context.save();
+        context.fillStyle = this.color;
+        context.fillRect(this.posX, this.posY, this.width, this.height);
+        context.restore();
+    }
+}
+
+class IB_Fixation extends EnvShape {
+    constructor(posX, posY, height, color, thickness) {
+        super(posX, posY, height, color);
+        this.thickness = thickness;
+    }
+
+    draw(context) {
+        context.save();
+        context.beginPath();
+        context.lineWidth = "3";
+        context.strokeStyle = "#0000FF";
+        context.fillStyle = "#777777";
+        context.rect(this.posX, this.posY, this.thickness, this.thickness);
+        context.stroke();
+        context.fill();
+        context.restore();
+    }
+}
+
+class IB_Target {
     constructor(x, y, dx, target_width, target_thickness) {
         this.x = x;
         this.y = y;
@@ -215,246 +265,54 @@ class Target {
     }
 }
 
-class L_OLD {
-    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas) {
-        this.speedSwitchTime = Math.floor(((Math.random() * 300) + 100) * 10);
-        this.newSpeedStartTime = new Date().getTime();
-        this.thickness = thickness;
-        this.width = width;
-        this.boxLeft = 0;
-        this.boxRight = canvas.width;
-        this.boxTop = canvas.height / 2 - vertical_limit;
-        this.boxBottom = canvas.height / 2 + vertical_limit - this.width;
-        this.color = color;
-        this.vel = 0;
-        this.cmVel = Math.floor((Math.random() * 5) + 3);
-        this.dY = dY;
-        this.dX = dX;
-        this.posX = posX;
-        this.posY = posY;
-        this.hit = false;
-        this.onTop = null;
-        this.onBottom = null;
-        this.hits = 0;
-        this.move = function () {
-            if (this.posX > this.boxRight - this.width) {
-                this.posX = this.boxRight - this.width;
-                this.dX *= -1;
-            }
-            if (this.posX < this.boxLeft) {
-                this.posX = this.boxLeft;
-                this.dX *= -1;
-            }
-            if (this.posY > this.boxBottom) {
-                this.posY = this.boxBottom;
-                this.dY *= -1;
-                this.hit = false;
-            }
-            if (this.posY < this.boxTop) {
-                this.posY = this.boxTop;
-                this.dY *= -1;
-                this.hit = false;
-            }
-            this.time = new Date().getTime();
-            this.newSpeedTime = this.time - this.newSpeedStartTime;
-            if (this.newSpeedTime >= this.speedSwitchTime) {
-                this.newSpeedStartTime = new Date().getTime();
-                this.cmVel = Math.floor((Math.random() * 5) + 3);
-                if ((this.posY < this.boxBottom) && (this.posY > this.boxTop) &&
-                    (this.posX > this.boxLeft) && (this.posX < this.boxRight)) {
-                    if (Math.random() * 10 > 5) {
-                        this.dX *= -1;
-                    }
-                    if (Math.random() * 10 > 5) {
-                        this.dY *= -1;
-                    }
-                }
-            }
-            this.vel = this.cmVel;
-            this.posX += this.vel * this.dX;
-            this.posY += this.vel * this.dY;
-            if ((this.posY + this.width < canvas.height / 2) && (this.onTop != true)) {
-                if (this.onBottom == true) {
-                    this.hits++;
-                }
-                this.onTop = true;
-                this.onBottom = false;
-            }
-            if ((this.posY > canvas.height / 2) && (this.onBottom != true)) {
-                if (this.onTop == true) {
-                    this.hits++;
-                }
-                this.onTop = false;
-                this.onBottom = true;
-            }
-        };
-        this.draw = function (context) {
-            this.bottomX = this.posX;
-            this.bottomY = this.posY + this.width - this.thickness;
-            this.topX = this.posX;
-            this.topY = this.posY;
-            context.save();
-            context.fillStyle = this.color;
-            context.fillRect(this.topX, this.topY, this.thickness,
-                this.width - this.thickness);
-            context.fillRect(this.bottomX, this.bottomY, this.width,
-                this.thickness);
-            context.restore();
-        };
-    }
-}
+function get_IB_target(target_position, frame_width, frame_height, target_width, cm, target_thickness) {
+    let x, y, dx;
 
-class T_OLD {
-    constructor(posX, posY, color, dX, dY, thickness, width, vertical_limit, canvas) {
-        this.speedSwitchTime = Math.floor(((Math.random() * 300) + 100) * 10);
-        this.newSpeedStartTime = new Date().getTime();
-        this.thickness = thickness;
-        this.width = width;
-        this.boxLeft = 0;
-        this.boxRight = canvas.width;
-        this.boxTop = canvas.height / 2 - vertical_limit;
-        this.boxBottom = canvas.height / 2 + vertical_limit - this.width;
-        this.color = color;
-        this.vel = 0;
-        this.cmVel = Math.floor((Math.random() * 5) + 3);
-        this.dY = dY;
-        this.dX = dX;
-        this.posX = posX;
-        this.posY = posY;
-        this.onTop = null;
-        this.onBottom = null;
-        this.hits = 0;
-        this.bounces = 0;
-        this.move = function () {
-            if (this.posX > this.boxRight - this.width) {
-                this.posX = this.boxRight - this.width;
-                this.dX *= -1;
-            }
-            if (this.posX < this.boxLeft) {
-                this.posX = this.boxLeft;
-                this.dX *= -1;
-            }
-            if (this.posY > this.boxBottom) {
-                this.posY = this.boxBottom;
-                this.dY *= -1;
-                this.hit = false;
-            }
-            if (this.posY < this.boxTop) {
-                this.posY = this.boxTop;
-                this.dY *= -1;
-                this.hit = false;
-            }
-            this.time = new Date().getTime();
-            this.newSpeedTime = this.time - this.newSpeedStartTime;
-            if (this.newSpeedTime >= this.speedSwitchTime) {
-                this.newSpeedStartTime = new Date().getTime();
-                this.cmVel = Math.floor((Math.random() * 5) + 3);
-                if ((this.posY + this.width < this.boxBottom) && (this.posY > this.boxTop) &&
-                    (this.posX > this.boxLeft) && (this.posX + this.width < this.boxRight)) {
-                    if (Math.random() * 10 > 5) {
-                        this.dX *= -1;
-                    }
-                    if (Math.random() * 10 > 5) {
-                        this.dY *= -1;
-                    }
-                }
-            }
-            this.vel = this.cmVel;
-            this.posX += this.vel * this.dX;
-            this.posY += this.vel * this.dY;
-            if ((this.posY + this.width < canvas.height / 2) && (this.onTop != true)) {
-                if (this.onBottom == true) {
-                    this.hits++;
-                }
-                this.onTop = true;
-                this.onBottom = false;
-            }
-            if ((this.posY > canvas.height / 2) && (this.onBottom != true)) {
-                if (this.onTop == true) {
-                    this.hits++;
-                }
-                this.onTop = false;
-                this.onBottom = true;
-            }
-        };
-        this.draw = function (context) {
-            this.topX = this.posX;
-            this.topY = this.posY;
-            this.bottomX = this.posX + this.width / 2 - this.thickness / 2;
-            this.bottomY = this.posY + this.thickness;
-            context.save();
-            context.fillStyle = this.color;
-            context.fillRect(this.topX, this.topY, this.width, this.thickness);
-            context.fillRect(this.bottomX, this.bottomY, this.thickness, this.width - this.thickness);
-            context.restore();
-        };
+    switch (target_position) {
+        case TARGET_POSITIONS.pvfar:
+            x = frame_width;
+            y = frame_height / 2 - cm * 5.9 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.pfar:
+            x = frame_width;
+            y = frame_height / 2 - cm * 4.8 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.pnear:
+            x = frame_width;
+            y = frame_height / 2 - cm * 2.4 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.line:
+            x = frame_width;
+            y = frame_height / 2 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.nnear:
+            x = frame_width;
+            y = frame_height / 2 + cm * 2.4 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.nfar:
+            x = frame_width;
+            y = frame_height / 2 + cm * 4.8 - target_width / 2;
+            dx = -1;
+            break;
+        case TARGET_POSITIONS.nvfar:
+            x = frame_width;
+            y = frame_height / 2 + cm * 5.9 - target_width / 2;
+            dx = -1;
+            break;
+        default:
+            // Handle unknown target_position values
+            x = 0;
+            y = 0;
+            dx = -1;
+            break;
     }
-}
 
-function get_target(target_position, frame_width, frame_height, target_width, cm, target_thickness) {
-    if (target_position == TARGET_POSITIONS.pvfar) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 - cm * 5.9 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.pfar) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 - cm * 4.8 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.pnear) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 - cm * 2.4 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.line) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.nnear) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 + cm * 2.4 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.nfar) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 + cm * 4.8 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
-    if (target_position == TARGET_POSITIONS.nvfar) {
-        return new Target(
-            x = frame_width,
-            y = frame_height / 2 + cm * 5.9 - target_width / 2,
-            dx = -1,
-            target_width = target_width,
-            target_thickness = target_thickness
-        );
-    }
+    return new IB_Target(x, y, dx, target_width, target_thickness);
 }
 
 const TARGET_POSITIONS = {
@@ -472,7 +330,7 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
 
     plugin.info = {
         name: 'inattentional-blindness',
-        description: '',
+        description: 'Inattentional blindness task',
         parameters: {
             cm: {
                 type: jsPsych.plugins.parameterType.INT,
@@ -519,17 +377,15 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                 type: jsPsych.plugins.parameterType.INT,
                 default: 100
             },
-            question: {
-                type: jsPsych.plugins.parameterType.STRING,
-                default: "Did you see a green T?"
-            },
             frame_width: {
                 type: jsPsych.plugins.parameterType.INT,
-                default: 666
+                default: 666,
+                description: 'Width of the frame in pixels.'
             },
             frame_height: {
                 type: jsPsych.plugins.parameterType.INT,
-                default: 546
+                default: 546,
+                description: 'Height of the frame in pixels.'
             },
             frame_time: {
                 type: jsPsych.plugins.parameterType.INT,
@@ -538,7 +394,7 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
             },
             trial_duration: {
                 type: jsPsych.plugins.parameterType.INT,
-                default: 150000
+                default: 15000
             },
             trial_waiting_time: {
                 type: jsPsych.plugins.parameterType.INT,
@@ -552,6 +408,20 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                 type: jsPsych.plugins.parameterType.INT,
                 default: 5
             },
+            line_height: {
+                type: jsPsych.plugins.parameterType.INT,
+                default: 2
+            },
+            min_speed: {
+                type: jsPsych.plugins.parameterType.INT,
+                default: 90,
+                description: 'Minimum speed of the shapes in pixels per second.'
+            },
+            max_speed: {
+                type: jsPsych.plugins.parameterType.INT,
+                default: 180,
+                description: 'Maximum speed of the shapes in pixels per second.'
+            }
         }
     };
 
@@ -651,10 +521,10 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                     }
                     positions.push([x, y]);
                     if (i >= trial.distractors_count / 2) {
-                        distractors.push(new T(x, y, color, xDir, yDir, distractor_thickness, distractor_width, distractor_vertical_limit, frame_canvas));
+                        distractors.push(new T(x, y, color, xDir, yDir, distractor_thickness, distractor_width, distractor_vertical_limit, trial.min_speed, trial.max_speed, frame_canvas));
                     }
                     else {
-                        distractors.push(new L(x, y, color, xDir, yDir, distractor_thickness, distractor_width, distractor_vertical_limit, frame_canvas));
+                        distractors.push(new L(x, y, color, xDir, yDir, distractor_thickness, distractor_width, distractor_vertical_limit, trial.min_speed, trial.max_speed, frame_canvas));
                     }
                 }
 
@@ -663,7 +533,7 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
 
             const distractors = get_distractors();
 
-            const target = trial.show_target ? get_target(
+            const target = trial.show_target ? get_IB_target(
                 trial.target_position,
                 frame_width,
                 frame_height,
@@ -672,49 +542,55 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                 distractor_thickness
             ) : undefined;
 
-            console.log(target);
-            let last_call_time = undefined;
-            let fps_array = [];
-            let trial_fps_array = [];
-            let fps_sum = 0;
-            let fps_mean = 0;
+            const line_height = Number(trial.line_height);
+            const line = new IB_Line(
+                0,
+                frame_canvas.height / 2 - line_height,
+                line_height,
+                "#0000FF",
+                frame_canvas.width
+            );
+            const fixation = new IB_Fixation(
+                frame_canvas.width / 2 - distractor_thickness / 2,
+                frame_canvas.height / 2 - distractor_thickness / 2,
+                line_height,
+                "#0000FF",
+                distractor_thickness
+            );
+
             let trial_start_time = 0;
 
             function run_animation_loop() {
                 // Clear the canvas
                 frame_context.clearRect(0, 0, frame_width, frame_height);
 
+
                 let current_time = new Date().getTime();
 
                 // Check the condition for showing the target
                 if (trial.show_target && ((current_time - trial_start_time) >= 5000)) {
-                    // Debugging: Log to console to check if this block is reached
-                    console.log('Showing target');
                     // Move and draw the target
-                    target.move();
+                    target.move(line);
                     target.draw(frame_context);
                 }
 
                 // Move and draw distractors
                 distractors.forEach(function (distractor) {
-                    distractor.move(distractors); // Move the shape and check for collisions with others
+                    distractor.move(line); // Move the shape and check for collisions with others
                     distractor.draw(frame_context); // Draw the shape
                 });
 
+                line.draw(frame_context);
+                fixation.draw(frame_context)
+
                 animation = window.requestAnimationFrame(run_animation_loop);
             }
+
 
             //Function for start experiment
             const start_trial = function () {
                 // start the response listener
                 if (JSON.stringify(trial.choices) !== JSON.stringify(["none"])) {
-                    let keyboardListener = jsPsych.pluginAPI.getKeyboardResponse({
-                        callback_function: after_response,
-                        valid_responses: trial.choices,
-                        rt_method: 'performance',
-                        persist: false,
-                        allow_held_key: false
-                    });
                 }
 
                 frame_context.clearRect(0, 0, frame_canvas.width, frame_canvas.height);
@@ -733,7 +609,6 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
 
             // function to handle responses by the subject
             let after_response = function (info) {
-
                 // only record the first response
                 if (response.key === -1) {
                     response = info;
@@ -746,10 +621,10 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                 black_count = 0;
                 distractors.forEach(function (distractor) {
                     if (distractor.color === "#FFFFFF") {
-                        white_count += distractor.hits;
+                        white_count += distractor.passedLineCount;
                     }
                     else {
-                        black_count += distractor.hits;
+                        black_count += distractor.passedLineCount;
                     }
                 });
                 return [white_count, black_count];
@@ -781,6 +656,9 @@ jsPsych.plugins["inattentional-blindness"] = (function () {
                     "is_target": trial.show_target,
                     "target_position": trial.target_position,
                 }
+
+                // Add the mouse again
+                document.body.style.cursor = "pointer"
 
                 // move on to the next trial
                 setTimeout(function () {

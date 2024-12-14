@@ -26,7 +26,7 @@ class Stimulus {
         this.img.id = 'stimulus_img';
         this.img.src = this.src;
         this.img.onload = function () {
-            console.log('Stimulus image preloaded:', this.src);
+            console.log('Stimulus image preloaded');
         };
         this.draw = function (context, canvas, stimulus_opacity) {
             context.save();
@@ -37,8 +37,8 @@ class Stimulus {
             if (this.side > 1) {
                 context.drawImage(this.img, 0, stimulus_location, this.width, this.height);
             } else {
-                context.drawImage(this.img, 
-                    stimulus_location - (this.width / 2), (canvas.height / 2) - (this.height / 2), 
+                context.drawImage(this.img,
+                    stimulus_location - (this.width / 2), (canvas.height / 2) - (this.height / 2),
                     this.width, this.height);
             }
 
@@ -72,9 +72,6 @@ class Mondrian {
 
         this.draw = function (context, mondrian_opacity) {
             context.save();
-            if (mondrian_opacity < 1) {
-                console.log(mondrian_opacity);
-            }
             context.globalAlpha = Number(mondrian_opacity);
             for (let i = 0; i < this.rectangle_count; i++) {
                 const x = Math.floor(this.get_random_number() * (this.range[2] - this.range[0]) + this.range[0]);
@@ -168,7 +165,7 @@ jsPsych.plugins["rms"] = (function () {
             mondrian_min_opacity: {
                 type: jsPsych.plugins.parameterType.FLOAT,
                 pretty_name: 'Mondrian minimum contrast',
-                default: 0.2,
+                default: 0.01,
                 description: "Minimum contrast value for the Mondrian mask."
             },
             trial_duration: {
@@ -281,6 +278,16 @@ jsPsych.plugins["rms"] = (function () {
                 type: jsPsych.plugins.parameterType.KEYCODE,
                 default: '#7F7F7F',
                 description: 'Background color'
+            },
+            mask_block_count: {
+                type: jsPsych.plugins.parameterType.INT,
+                default: 1,
+                description: 'Number of blocks to show the mask'
+            },
+            correct_responses: {
+                type: jsPsych.plugins.parameterType.KEYCODE,
+                default: [],
+                description: 'The correct response to the stimulus'
             }
         }
     };
@@ -314,6 +321,7 @@ jsPsych.plugins["rms"] = (function () {
             const fade_in_time = Number(trial.fade_in_time);
             const start_fade_out = (Number(trial.trial_duration) * 1000) - (fade_out_time * 1000);
             const end_fade_in = Number(fade_in_time) * 1000;
+            const mask_block_count = Number(trial.mask_block_count);
 
             let orientation = 'h';
             if (frame_height > frame_width) {
@@ -352,8 +360,6 @@ jsPsych.plugins["rms"] = (function () {
             // Hide mouse
             document.body.style.cursor = "none";
 
-            let setTimeoutHandlers = [];
-
             // store response
             let response = {
                 rt: -1,
@@ -363,15 +369,21 @@ jsPsych.plugins["rms"] = (function () {
             let trial_data = {}
 
             function is_correct(answer) {
-                if ((trial.right_up.includes(answer.toLowerCase()) || trial.right_up.includes(answer.toUpperCase())) &&
-                    (stimulus_side == '0' || stimulus_side == '2')) {
-                    return true;
-                } else if ((trial.left_down.includes(answer.toLowerCase()) || trial.left_down.includes(answer.toUpperCase())) &&
-                    (stimulus_side == '1' || stimulus_side == '3')) {
-                    return true
-                } else {
-                    return false;
+                if (trial.correct_responses.length > 0) {
+                    return trial.correct_responses.includes(answer.toLowerCase()) || trial.correct_responses.includes(answer.toUpperCase());
                 }
+                else {
+                    if ((trial.right_up.includes(answer.toLowerCase()) || trial.right_up.includes(answer.toUpperCase())) &&
+                        (stimulus_side == '0' || stimulus_side == '2')) {
+                        return true;
+                    } else if ((trial.left_down.includes(answer.toLowerCase()) || trial.left_down.includes(answer.toUpperCase())) &&
+                        (stimulus_side == '1' || stimulus_side == '3')) {
+                        return true
+                    } else {
+                        return false;
+                    }
+                }
+
             }
 
             let start_time = 0;
@@ -381,14 +393,15 @@ jsPsych.plugins["rms"] = (function () {
             let start_stimulus_time = new Date().getTime();
             let stimulus_opacity = 0;
             let mondrian_opacity = 0;
-            
+            let mask_counter = 0;
 
             function run_animation_loop() {
                 // Calculate time elapsed since the last animation frame
                 current_time = new Date().getTime();
 
                 // Check if it's time to switch between stimulus and mask
-                if (masked && ((current_time - start_mask_time) >= mask_duration)) {
+                if (masked && ((current_time - start_mask_time) >= mask_duration) && mask_counter >= mask_block_count) {
+                    mask_counter = 0;
                     if (current_time - start_time >= end_fade_in) {
                         stimulus_opacity = stimulus_max_opacity;
                     } else {
@@ -399,7 +412,9 @@ jsPsych.plugins["rms"] = (function () {
                     fixation.draw(frame_context, frame_canvas);
                     start_stimulus_time = current_time;
                     masked = false;
-                } else if (!masked && ((current_time - start_stimulus_time) >= stimulus_duration)) {
+                } else if ((!masked && ((current_time - start_stimulus_time) >= stimulus_duration) ||
+                    masked && ((current_time - start_mask_time) >= mask_duration) && mask_counter < mask_block_count)) {
+                    mask_counter++;
                     if (current_time - start_time >= start_fade_out) {
                         const fade_progress = ((current_time - start_time) - start_fade_out) / (fade_out_time * 1000);
                         mondrian_opacity = (mondrian_max_opacity * (1 - fade_progress)) + (mondrian_min_opacity * fade_progress);
@@ -418,7 +433,6 @@ jsPsych.plugins["rms"] = (function () {
             }
 
             const end_trial = function () {
-                console.log("time pass: " + (new Date().getTime() - start_time))
                 window.cancelAnimationFrame(animation);
                 frame_context.clearRect(0, 0, frame_canvas.width, frame_canvas.height);
 
@@ -427,7 +441,6 @@ jsPsych.plugins["rms"] = (function () {
                 // kill any remaining setTimeout handlers
                 for (i = 0; i < allTimeouts.length; i++) {
                     clearTimeout(allTimeouts[i]);
-                    console.log('clearing ' + allTimeouts[i]);
                 }
 
                 // kill keyboard listeners
@@ -471,7 +484,6 @@ jsPsych.plugins["rms"] = (function () {
 
             // function to handle responses by the subject
             let after_response = function (info) {
-                console.log(info);
                 // only record the first response
                 if (response.key === -1) {
                     response = info;

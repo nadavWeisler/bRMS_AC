@@ -8,8 +8,9 @@
  *
  * based on baed on Josh de Leeuw's jspsych-visual-search-circle plugin
  *
- *
  **/
+const LINE_WIDTH = 3;
+
 class VisualSearchShape {
   constructor() {
     this.type = "VisualSearchShape";
@@ -28,6 +29,10 @@ class VisualSearchShape {
     this.angle = angle;
   }
 
+  to_string() {
+    return this.type + "_" + this.border_color + "_(" + this.x + "," + this.y + ")";
+  }
+
   set_size(width, height) {
     this.width = width;
     this.height = height;
@@ -41,6 +46,8 @@ class VisualSearchShape {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
+    ctx.closePath();
+
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
     ctx.stroke();
@@ -75,9 +82,11 @@ class VisualSearchCircle extends VisualSearchShape {
     // Draw the circle border
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.lineWidth = LINE_WIDTH;
+    ctx.closePath();
+
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
-    ctx.closePath();
 
     super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
@@ -109,7 +118,84 @@ class VisualSearchDiamond extends VisualSearchShape {
     ctx.lineTo(this.x, this.y - this.height / 2);
     ctx.lineTo(this.x + this.width / 2, this.y);
     ctx.lineTo(this.x, this.y + this.height / 2);
+    ctx.lineWidth = LINE_WIDTH;
     ctx.closePath();
+
+    ctx.strokeStyle = this.border_color;
+    ctx.stroke();
+
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
+  }
+}
+
+class VisualSEarchPentagon extends VisualSearchShape {
+  constructor() {
+    super();
+    this.type = "pentagon";
+  }
+
+  draw(ctx) {
+    let lineStartX, lineStartY, lineEndX, lineEndY;
+    if (this.angle === 90) {
+      lineStartX = this.x;
+      lineStartY = this.y - (this.height / 4);
+      lineEndX = this.x;
+      lineEndY = this.y + (this.height / 4);
+    } else {
+      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
+      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
+      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
+      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
+    }
+
+    // Draw the pentagon border
+    ctx.beginPath();
+    ctx.moveTo(this.x - this.width / 2, this.y);
+    ctx.lineTo(this.x - this.width / 4, this.y - this.height / 2);
+    ctx.lineTo(this.x + this.width / 4, this.y - this.height / 2);
+    ctx.lineTo(this.x + this.width / 2, this.y);
+    ctx.lineTo(this.x, this.y + this.height / 2);
+    ctx.lineWidth = LINE_WIDTH;
+    ctx.closePath();
+
+    ctx.strokeStyle = this.border_color;
+    ctx.stroke();
+
+    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
+  }
+}
+
+class VisualSeatchHexagon extends VisualSearchShape {
+  constructor() {
+    super();
+    this.type = "hexagon";
+  }
+
+  draw(ctx) {
+    let lineStartX, lineStartY, lineEndX, lineEndY;
+    if (this.angle === 90) {
+      lineStartX = this.x;
+      lineStartY = this.y - (this.height / 4);
+      lineEndX = this.x;
+      lineEndY = this.y + (this.height / 4);
+    } else {
+      lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
+      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
+      lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
+      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
+    }
+
+    // Draw the hexagon border
+    ctx.beginPath();
+    ctx.moveTo(this.x - this.width / 2, this.y);
+    ctx.lineTo(this.x - this.width / 4, this.y - this.height / 2);
+    ctx.lineTo(this.x + this.width / 4, this.y - this.height / 2);
+    ctx.lineTo(this.x + this.width / 2, this.y);
+    ctx.lineTo(this.x + this.width / 4, this.y + this.height / 2);
+    ctx.lineTo(this.x - this.width / 4, this.y + this.height / 2);
+    ctx.lineWidth = LINE_WIDTH;
+    ctx.closePath();
+
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
 
@@ -132,9 +218,9 @@ class VisualSeachTriangle extends VisualSearchShape {
       lineEndY = this.y + (this.height / 4);
     } else {
       lineStartX = this.x - (this.width / 4) * Math.cos(this.angle);
-      lineStartY = this.y - (this.height / 4) * Math.sin(this.angle);
+      lineStartY = 1.05 * this.y - (this.height / 4) * Math.sin(this.angle);
       lineEndX = this.x + (this.width / 4) * Math.cos(this.angle);
-      lineEndY = this.y + (this.height / 4) * Math.sin(this.angle);
+      lineEndY = 1.05 * this.y + (this.height / 4) * Math.sin(this.angle);
     }
 
     // Draw the triangle border
@@ -142,11 +228,11 @@ class VisualSeachTriangle extends VisualSearchShape {
     ctx.moveTo(this.x - this.width / 2, this.y + this.height / 2);
     ctx.lineTo(this.x, this.y - this.height / 2);
     ctx.lineTo(this.x + this.width / 2, this.y + this.height / 2);
+    ctx.lineWidth = LINE_WIDTH;
     ctx.closePath();
+
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
-
-    super.drawLineSegment(ctx, lineStartX, lineStartY, lineEndX, lineEndY);
   }
 }
 
@@ -176,7 +262,9 @@ class VisualSearchSquare extends VisualSearchShape {
     ctx.lineTo(this.x + this.width / 2, this.y - this.height / 2);
     ctx.lineTo(this.x + this.width / 2, this.y + this.height / 2);
     ctx.lineTo(this.x - this.width / 2, this.y + this.height / 2);
+    ctx.lineWidth = LINE_WIDTH;
     ctx.closePath();
+
     ctx.strokeStyle = this.border_color;
     ctx.stroke();
 
@@ -193,30 +281,13 @@ function getShapeFromName(name) {
     return new VisualSeachTriangle();
   } else if (name === "square") {
     return new VisualSearchSquare();
+  } else if (name === "pentagon") {
+    return new VisualSEarchPentagon();
+  } else if (name === "hexagon") {
+    return new VisualSeatchHexagon();
   } else {
     throw new Error("Invalid shape name");
   }
-}
-
-function deepCopy(obj) {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    // If the object is an array, create a new array and copy each element
-    return obj.map(deepCopy);
-  }
-
-  // If the object is a regular object, create a new object and copy each property
-  const newObj = {};
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      newObj[key] = deepCopy(obj[key]);
-    }
-  }
-
-  return newObj;
 }
 
 class FixationCross {
@@ -309,7 +380,7 @@ jsPsych.plugins["attentional-capture"] = (function () {
       circle_diameter: {
         type: jsPsych.plugins.parameterType.INT,
         pretty_name: 'Circle diameter',
-        default: 100,
+        default: 120,
         description: 'The diameter of the search array circle in milliseconds.'
       },
       trial_duration: {
@@ -370,7 +441,7 @@ jsPsych.plugins["attentional-capture"] = (function () {
         type: jsPsych.plugins.parameterType.KEYCODE,
         array: true,
         pretty_name: 'Choices',
-        default: ['f', 'j'],
+        default: ['d', 'k'],
         description: 'The keys the subject is allowed to press to respond to the stimulus.'
       },
       fixation_color: {
@@ -378,6 +449,18 @@ jsPsych.plugins["attentional-capture"] = (function () {
         pretty_name: 'Fixation color',
         default: 'white',
         description: 'The color of the fixation cross.'
+      },
+      horizontal_keys: {
+        type: jsPsych.plugins.parameterType.KEYCODE,
+        pretty_name: 'Horizontal keys',
+        default: ['d', 'D'],
+        description: 'The key to press to indicate that the target is on the left.'
+      },
+      vertical_keys: {
+        type: jsPsych.plugins.parameterType.KEYCODE,
+        pretty_name: 'Vertical keys',
+        default: ['K', 'k'],
+        description: 'The key to press to indicate that the target is on the right.'
       }
     }
   }
@@ -387,6 +470,16 @@ jsPsych.plugins["attentional-capture"] = (function () {
     function clear_display() {
       display_element.innerHTML = '';
     }
+
+    function is_correct(answer, angle) {
+      if (trial.horizontal_keys.includes(answer.toLowerCase()) && angle == 0) {
+          return true;
+      } else if (trial.vertical_keys.includes(answer.toLowerCase()) && angle == 90){
+          return true
+      } else {
+          return false;
+      }
+  }
 
     function shuffle(array) {
       let currentIndex = array.length,
@@ -470,6 +563,8 @@ jsPsych.plugins["attentional-capture"] = (function () {
       shapes.push(current_distractor_shape);
     }
 
+    shapes = shuffle(shapes);
+
     // Set the locations and sizes of the shapes
     for (let [index, location] of display_locations.entries()) {
       shapes[index].set_location(location[0], location[1]);
@@ -529,15 +624,21 @@ jsPsych.plugins["attentional-capture"] = (function () {
     }
 
     function end_trial(rt, key_press) {
+      const letter_answer = String.fromCharCode(key_press)
       const trial_data = {
         rt: rt,
         target_angle: target_angle,
         distractor_angle: distractor_angle,
-        key_press: key_press,
+        key_press: letter_answer,
         locations: JSON.stringify(display_locations),
-        set_size: set_size
+        shapes: JSON.stringify(shapes.map(shape => shape.to_string())),
+        set_size: set_size,
+        correct: is_correct(letter_answer, target_angle)
       };
 
+      // Add the mouse again
+      // document.body.style.cursor = "pointer";
+      
       // go to next trial
       jsPsych.finishTrial(trial_data);
     }
